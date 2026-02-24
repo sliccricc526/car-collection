@@ -1001,7 +1001,7 @@ export default function App() {
                     {justLoggedDriven ? "Today ✓" : (() => {
                       if (!car.last_driven) return "—";
                       const d = Math.floor((new Date() - new Date(car.last_driven + "T12:00:00")) / 86400000);
-                      if (d === 0) return "Today";
+                      if (d <= 0) return "Today";
                       if (d === 1) return "Yesterday";
                       return `${fmtDate(car.last_driven)} · ${d}d ago`;
                     })()}
