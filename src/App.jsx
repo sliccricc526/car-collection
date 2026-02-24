@@ -22,7 +22,7 @@ const emptyForm = () => ({
   last_driven: "", notes: "", photos: [], maintenance_log: [],
   last_oil_change_date: "", last_oil_change_mileage: "", oil_type: "Full Synthetic",
   oil_interval_miles: "3000", oil_interval_months: "6", oil_change_log: [],
-  insurance_photo: null,
+  insurance_photo: null, mileage_log: [],
 });
 
 function daysUntil(dateStr) {
@@ -176,6 +176,11 @@ export default function App() {
   const [showOilSettings, setShowOilSettings] = useState(false);
   const [oilDoneForm, setOilDoneForm] = useState({ date: todayStr(), mileage: "", oil_type: "Full Synthetic", notes: "" });
   const [oilSettingsForm, setOilSettingsForm] = useState({ interval_miles: "3000", interval_months: "6" });
+
+  // Driven today state
+  const [showDrivenModal, setShowDrivenModal] = useState(false);
+  const [drivenMileageInput, setDrivenMileageInput] = useState("");
+  const [justLoggedDriven, setJustLoggedDriven] = useState(false);
 
   // Settings state
   const [editingGarageName, setEditingGarageName] = useState(false);
@@ -463,6 +468,46 @@ export default function App() {
     });
   }
 
+  // ── DRIVEN TODAY ──
+  function openDrivenToday() {
+    setDrivenMileageInput("");
+    setShowDrivenModal(true);
+  }
+
+  async function saveDrivenToday(skipMileage) {
+    const today = todayStr();
+    const newMileage = parseInt(drivenMileageInput) || null;
+    const updates = { last_driven: today };
+    const entry = { date: today, mileage: newMileage || car.mileage };
+    updates.mileage_log = [entry, ...(car.mileage_log || [])];
+    if (!skipMileage && newMileage && newMileage > (car.mileage || 0)) updates.mileage = newMileage;
+    await updateCar(selectedId, updates);
+    setShowDrivenModal(false);
+    setJustLoggedDriven(true);
+    setTimeout(() => setJustLoggedDriven(false), 3000);
+    showToast("Logged ✓");
+  }
+
+  // ── MILEAGE PREDICTION ──
+  function calcAvgMonthlyMiles(log) {
+    if (!log || log.length < 2) return null;
+    const sorted = [...log].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const first = sorted[0], last = sorted[sorted.length - 1];
+    const months = (new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24 * 30.44);
+    if (months < 0.5) return null;
+    return (last.mileage - first.mileage) / months;
+  }
+
+  function predictNextOil(c) {
+    const avg = calcAvgMonthlyMiles(c.mileage_log);
+    if (!avg || !c.last_oil_change_mileage || !c.oil_interval_miles) return null;
+    const milesRemaining = c.oil_interval_miles - ((c.mileage || 0) - c.last_oil_change_mileage);
+    const monthsRemaining = milesRemaining / avg;
+    const d = new Date();
+    d.setDate(d.getDate() + monthsRemaining * 30.44);
+    return { date: d, months: monthsRemaining, milesRemaining };
+  }
+
   // ── DERIVED ──
   const car = cars.find(c => c.id === selectedId);
   const totalValue = cars.reduce((s, c) => s + (+c.current_value || 0), 0);
@@ -637,6 +682,25 @@ export default function App() {
             <div className="flex gap-3">
               <button onClick={() => setMaintDetail(null)} className="flex-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-semibold text-sm px-4 py-2 rounded-md">Done</button>
               <button onClick={() => removeLog(maintDetail.id)} className={`border ${t.border} text-red-400 text-sm px-4 py-2 rounded-md`}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Driven today modal */}
+      {showDrivenModal && car && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+            <h3 className={`text-base font-semibold mb-1 ${t.text}`}>Driven today</h3>
+            <p className={`text-sm ${t.muted} mb-4`}>{car.year} {car.make} {car.model}</p>
+            <div>
+              <label className={`block text-xs ${t.muted} mb-1`}>Current mileage <span className="opacity-60">(optional)</span></label>
+              <input type="number" placeholder={`Last: ${(car.mileage || 0).toLocaleString()} mi`} value={drivenMileageInput} onChange={e => setDrivenMileageInput(e.target.value)} className={inputCls} />
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => saveDrivenToday(false)} className="flex-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-semibold text-sm px-4 py-2 rounded-md">Save</button>
+              <button onClick={() => saveDrivenToday(true)} className={`border ${t.border} ${t.muted} text-sm px-4 py-2 rounded-md`}>Skip</button>
+              <button onClick={() => setShowDrivenModal(false)} className={`border ${t.border} ${t.muted} text-sm px-4 py-2 rounded-md`}>Cancel</button>
             </div>
           </div>
         </div>
@@ -917,7 +981,6 @@ export default function App() {
                 { label: "Mileage", value: fmtMiles(car.mileage) },
                 { label: "Storage Location", value: car.location },
                 { label: "Acquired", value: fmtDate(car.purchase_date) },
-                { label: "Last Driven / Started", value: fmtDate(car.last_driven) },
                 { label: "Next Service Due", value: fmtDate(car.next_service_date) },
               ].map(r => (
                 <div key={r.label} className={`flex justify-between items-start py-3 border-b ${t.divider}`}>
@@ -925,6 +988,65 @@ export default function App() {
                   <span className={`text-sm font-medium text-right max-w-xs ${t.text}`}>{r.value || "—"}</span>
                 </div>
               ))}
+
+              {/* Last driven row with button */}
+              <div className={`flex justify-between items-center py-3 border-b ${t.divider}`}>
+                <span className={`text-sm ${t.muted}`}>Last Driven / Started</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${justLoggedDriven ? "text-green-500" : t.text}`}>
+                    {justLoggedDriven ? "Today ✓" : (() => {
+                      if (!car.last_driven) return "—";
+                      const d = Math.floor((new Date() - new Date(car.last_driven + "T12:00:00")) / 86400000);
+                      if (d === 0) return "Today";
+                      if (d === 1) return "Yesterday";
+                      return `${fmtDate(car.last_driven)} · ${d}d ago`;
+                    })()}
+                  </span>
+                  {!justLoggedDriven && (
+                    <button onClick={openDrivenToday} className={`text-xs px-2.5 py-1 rounded-md border font-semibold text-amber-600 border-amber-600/40 ${dark ? "bg-amber-600/10" : "bg-amber-50"}`}>
+                      Driven today
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Mileage prediction */}
+              {(() => {
+                const avg = calcAvgMonthlyMiles(car.mileage_log);
+                const pred = predictNextOil(car);
+                if (!avg && !pred) return null;
+                const milesUsed = (car.mileage || 0) - (car.last_oil_change_mileage || 0);
+                const pct = car.oil_interval_miles ? Math.min((milesUsed / car.oil_interval_miles) * 100, 100) : null;
+                return (
+                  <div className={`mt-4 border ${t.card} rounded-xl p-4`}>
+                    <p className={`text-xs tracking-widest uppercase ${t.muted} mb-3`}>Mileage Intelligence</p>
+                    {avg && (
+                      <div className="flex gap-4 mb-3">
+                        <div><p className={`text-xs ${t.muted}`}>Avg / month</p><p className={`text-base font-semibold ${t.text}`}>{Math.round(avg).toLocaleString()} mi</p></div>
+                        <div><p className={`text-xs ${t.muted}`}>Avg / year</p><p className={`text-base font-semibold ${t.text}`}>{Math.round(avg * 12).toLocaleString()} mi</p></div>
+                      </div>
+                    )}
+                    {pct !== null && (
+                      <div className="mb-3">
+                        <div className="flex justify-between mb-1">
+                          <span className={`text-xs ${t.muted}`}>Oil interval used</span>
+                          <span className={`text-xs ${t.muted}`}>{Math.round(pct)}%</span>
+                        </div>
+                        <div className={`h-1.5 rounded-full ${dark ? "bg-stone-800" : "bg-stone-200"}`}>
+                          <div className={`h-full rounded-full ${pct > 80 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-green-500"}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    )}
+                    {pred && (
+                      <div className="flex gap-4">
+                        <div><p className={`text-xs ${t.muted}`}>Est. oil due</p><p className={`text-sm font-semibold ${t.text}`}>{pred.date.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p></div>
+                        <div><p className={`text-xs ${t.muted}`}>Miles left</p><p className={`text-sm font-semibold ${t.text}`}>{Math.max(0, Math.round(pred.milesRemaining)).toLocaleString()} mi</p></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {car.notes && <div className={`mt-4 p-4 border ${t.card} border-l-2 border-l-amber-600/50 rounded-xl`}><p className={`text-xs tracking-widest uppercase ${t.muted} mb-2`}>Notes</p><p className={`text-sm ${t.subtle} leading-relaxed`}>{car.notes}</p></div>}
             </div>
           )}
