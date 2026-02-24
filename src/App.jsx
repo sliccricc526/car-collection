@@ -494,7 +494,11 @@ export default function App() {
     const sorted = [...log].sort((a, b) => new Date(a.date) - new Date(b.date));
     const first = sorted[0], last = sorted[sorted.length - 1];
     const months = (new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24 * 30.44);
-    if (months < 0.5) return null;
+    // if entries span less than 0.5 months, estimate based on mileage spread assuming 1 month
+    if (months < 0.5) {
+      const spread = last.mileage - first.mileage;
+      return spread > 0 ? spread : null;
+    }
     return (last.mileage - first.mileage) / months;
   }
 
