@@ -475,7 +475,7 @@ export default function App() {
     setAuctionLoading(true); setAuctionError(null);
     try {
       const params = new URLSearchParams({ make: c.make, model: c.model, year: String(c.year), limit: "10", apiKey });
-      const res = await fetch(`/functions/v1/auction-comps?${params}`);
+      const res = await fetch(`https://bftdnuyjwbwvbvszioak.supabase.co/functions/v1/auction-comps?${params}`);
       if (res.status === 404) { setAuctionError("Edge function not deployed. See Settings for setup instructions."); return; }
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const json = await res.json();
