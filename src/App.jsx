@@ -1016,9 +1016,9 @@ export default function App() {
 
               {/* Mileage prediction */}
               {(() => {
+                if (!car.mileage_log || car.mileage_log.length < 2) return null;
                 const avg = calcAvgMonthlyMiles(car.mileage_log);
                 const pred = predictNextOil(car);
-                if (!avg && !pred) return null;
                 const milesUsed = (car.mileage || 0) - (car.last_oil_change_mileage || 0);
                 const pct = car.oil_interval_miles ? Math.min((milesUsed / car.oil_interval_miles) * 100, 100) : null;
                 return (
