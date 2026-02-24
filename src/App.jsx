@@ -177,12 +177,6 @@ export default function App() {
   const [oilDoneForm, setOilDoneForm] = useState({ date: todayStr(), mileage: "", oil_type: "Full Synthetic", notes: "" });
   const [oilSettingsForm, setOilSettingsForm] = useState({ interval_miles: "3000", interval_months: "6" });
 
-  // Auction comps state
-  const [apiKey, setApiKey] = useState("");
-  const [auctionComps, setAuctionComps] = useState({});
-  const [auctionLoading, setAuctionLoading] = useState(false);
-  const [auctionError, setAuctionError] = useState(null);
-
   // Settings state
   const [editingGarageName, setEditingGarageName] = useState(false);
   const [garageNameEdit, setGarageNameEdit] = useState("");
@@ -467,24 +461,6 @@ export default function App() {
       setConfirmModal(null);
       showToast("Record deleted");
     });
-  }
-
-  // ── AUCTION COMPS ──
-  async function fetchAuctionComps(c) {
-    if (!apiKey.trim()) { setAuctionError("Enter your Old Cars Data API key in Settings."); return; }
-    setAuctionLoading(true); setAuctionError(null);
-    try {
-      const params = new URLSearchParams({ make: c.make, model: c.model, year: String(c.year), limit: "10", apiKey });
-      const res = await fetch(`https://bftdnuyjwbwvbvszioak.supabase.co/functions/v1/auction-comps?${params}`);
-      if (res.status === 404) { setAuctionError("Edge function not deployed. See Settings for setup instructions."); return; }
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      const json = await res.json();
-      setAuctionComps(prev => ({ ...prev, [c.id]: json.data || [] }));
-    } catch (e) {
-      if (e.message?.includes("fetch") || e.message?.includes("Network")) {
-        setAuctionError("CORS error — Supabase Edge Function proxy required. See Settings.");
-      } else { setAuctionError(e.message || "Failed to load auction data."); }
-    } finally { setAuctionLoading(false); }
   }
 
   // ── DERIVED ──
@@ -994,58 +970,6 @@ export default function App() {
                 <a href={classicUrl(car)} target="_blank" rel="noopener noreferrer" className="text-sm border border-amber-600/40 text-amber-600 hover:bg-amber-600/10 px-4 py-2 rounded-md">🔗 Classic.com</a>
               </div>
 
-              {/* Auction Comps */}
-              <div className={`border-t-2 border-t-amber-600 border ${t.card} rounded-xl p-5`}>
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className={`text-sm font-semibold ${t.text}`}>Auction Comps</p>
-                    <p className={`text-xs ${t.muted} mt-0.5`}>Recent sold listings · Old Cars Data</p>
-                  </div>
-                  <button onClick={() => fetchAuctionComps(car)} disabled={auctionLoading}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-md ${auctionLoading ? `${dark ? "bg-stone-800 text-stone-600" : "bg-stone-100 text-stone-400"} cursor-not-allowed` : "bg-amber-600 hover:bg-amber-500 text-stone-950"}`}>
-                    {auctionLoading ? "Loading…" : auctionComps[car.id] ? "Refresh" : "Load Comps"}
-                  </button>
-                </div>
-                {auctionError && (
-                  <div className={`p-3 rounded-lg mb-3 ${dark ? "bg-red-900/30 border border-red-800/50" : "bg-red-50 border border-red-200"}`}>
-                    <p className={`text-xs ${dark ? "text-red-400" : "text-red-600"}`}>{auctionError}</p>
-                    <button onClick={() => setView("settings")} className="text-xs text-amber-500 underline mt-1">Go to Settings →</button>
-                  </div>
-                )}
-                {!auctionComps[car.id] && !auctionError && !auctionLoading && <p className={`text-sm text-center py-6 ${t.muted}`}>Click "Load Comps" to fetch recent sold listings.</p>}
-                {auctionLoading && <div className="flex items-center justify-center py-8 gap-2"><div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" /><p className={`text-sm ${t.muted}`}>Fetching…</p></div>}
-                {auctionComps[car.id] && !auctionLoading && (
-                  auctionComps[car.id].length === 0 ? <p className={`text-sm text-center py-6 ${t.muted}`}>No results found.</p>
-                    : <>
-                      {(() => {
-                        const sold = auctionComps[car.id].filter(a => a.auction_status === "sold" && a.price);
-                        if (!sold.length) return null;
-                        const prices = sold.map(a => a.price);
-                        const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
-                        return (
-                          <div className={`grid grid-cols-3 gap-3 mb-4 p-3 rounded-lg ${dark ? "bg-stone-800" : "bg-stone-50"}`}>
-                            {[{ l: "Avg", v: fmt(avg) }, { l: "Low", v: fmt(Math.min(...prices)) }, { l: "High", v: fmt(Math.max(...prices)) }].map(s => (
-                              <div key={s.l} className="text-center"><p className={`text-xs ${t.muted}`}>{s.l}</p><p className={`text-sm font-semibold ${t.text}`}>{s.v}</p></div>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                      {auctionComps[car.id].map(a => (
-                        <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"
-                          className={`py-3 border-b ${t.divider} flex justify-between items-start hover:opacity-80`}>
-                          <div className="flex-1 min-w-0 pr-3">
-                            <p className={`text-sm font-medium ${t.text} truncate`}>{a.title}</p>
-                            <p className={`text-xs ${t.muted}`}>{a.source} · {fmtDate(a.auction_end_date)}{a.mileage ? ` · ${parseInt(a.mileage).toLocaleString()} mi` : ""}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className={`text-sm font-semibold ${a.auction_status === "sold" ? "text-green-500" : t.text}`}>{a.price ? fmt(a.price) : "—"}</p>
-                            <p className={`text-xs ${t.muted} capitalize`}>{a.auction_status}</p>
-                          </div>
-                        </a>
-                      ))}
-                    </>
-                )}
-              </div>
             </div>
           )}
 
@@ -1298,22 +1222,6 @@ export default function App() {
                 ))}
               </div>
             )}
-          </FormSection>
-
-          <FormSection title="Integrations" t={t}>
-            <div className={`border ${t.card} rounded-xl p-4`}>
-              <div className="flex justify-between items-center mb-1">
-                <p className={`text-sm font-medium ${t.text}`}>Old Cars Data API Key</p>
-                <a href="https://oldcarsdata.com" target="_blank" rel="noopener noreferrer" className={`text-xs ${t.muted} underline`}>Get key →</a>
-              </div>
-              <p className={`text-xs ${t.muted} mb-3`}>Powers auction comps in the Financials tab for each vehicle.</p>
-              <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your API key…" className={inputCls} />
-              {apiKey && <p className="text-xs text-green-500 mt-2">✓ API key saved for this session</p>}
-              <div className={`mt-3 p-3 rounded-lg border ${dark ? "bg-amber-900/20 border-amber-800/40" : "bg-amber-50 border-amber-200"}`}>
-                <p className={`text-xs font-semibold ${dark ? "text-amber-300" : "text-amber-700"} mb-1`}>⚡ Supabase Edge Function Required</p>
-                <p className={`text-xs ${t.muted}`}>Old Cars Data blocks direct browser requests. A Supabase Edge Function proxy is needed — ask Claude for the deployment code.</p>
-              </div>
-            </div>
           </FormSection>
 
           <FormSection title="Preferences" t={t}>
