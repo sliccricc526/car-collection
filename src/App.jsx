@@ -141,9 +141,9 @@ function FormSection({ title, children, t }) {
 
 function Field({ label, children, t, span }) {
   return (
-    <div style={{ minWidth: 0, ...(span === 2 ? { gridColumn: "span 2" } : {}) }}>
+    <div style={{ minWidth: 0, width: "100%", ...(span === 2 ? { gridColumn: "span 2" } : {}) }}>
       <label className={`block text-xs ${t.muted} mb-1`}>{label}</label>
-      <div style={{ width: "100%", boxSizing: "border-box" }}>{children}</div>
+      {children}
     </div>
   );
 }
@@ -215,8 +215,8 @@ export default function App() {
     hover: dark ? "hover:bg-stone-800" : "hover:bg-stone-50",
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
-  const inputCls = `min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
-  const inputStyle = { width: "100%", boxSizing: "border-box" };
+  const inputCls = `w-full min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
+  const inputStyle = { boxSizing: "border-box" };
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
   function askConfirm(msg, fn) { setConfirmModal({ msg, fn }); }
@@ -652,7 +652,8 @@ export default function App() {
   const oilWarn = !oilOver && ((oilDL !== null && oilDL <= 14) || (oilML !== null && oilML <= 500));
 
   return (
-    <div className={`min-h-screen ${t.bg} ${t.text} font-sans`} style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
+    <div style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }} className={`min-h-screen ${t.bg} ${t.text} font-sans`}>
+      <style>{`*, *::before, *::after { box-sizing: border-box; }`}</style>
 
       {/* Toast */}
       {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-amber-600 text-stone-950 text-sm font-semibold px-4 py-2 rounded-full shadow-lg pointer-events-none">{toast}</div>}
