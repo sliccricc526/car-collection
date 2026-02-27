@@ -105,7 +105,7 @@ function PhotoViewer({ photos, startIndex, onClose, dark }) {
 function ConfirmModal({ msg, onOk, onCancel, t }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[80] px-4">
-      <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+      <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl`}>
         <p className={`text-sm ${t.text} mb-5`}>{msg}</p>
         <div className="flex gap-3 justify-end">
           <button onClick={onCancel} className={`border ${t.border} ${t.muted} text-sm px-4 py-2 rounded-md`}>Cancel</button>
@@ -201,7 +201,7 @@ export default function App() {
     hover: dark ? "hover:bg-stone-800" : "hover:bg-stone-50",
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
-  const inputCls = `w-full border rounded-md px-3 py-2 text-sm focus:outline-none font-sans ${t.input}`;
+  const inputCls = `w-full border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
   function askConfirm(msg, fn) { setConfirmModal({ msg, fn }); }
@@ -637,7 +637,7 @@ export default function App() {
   const oilWarn = !oilOver && ((oilDL !== null && oilDL <= 14) || (oilML !== null && oilML <= 500));
 
   return (
-    <div className={`min-h-screen ${t.bg} ${t.text} font-sans pb-20`}>
+    <div className={`min-h-screen ${t.bg} ${t.text} font-sans`} style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
 
       {/* Toast */}
       {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-amber-600 text-stone-950 text-sm font-semibold px-4 py-2 rounded-full shadow-lg pointer-events-none">{toast}</div>}
@@ -660,14 +660,14 @@ export default function App() {
 
       {/* Maintenance detail modal */}
       {maintDetail && car && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto`}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 px-4 pb-4">
+          <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-start mb-4">
               <div>
                 <p className={`text-base font-semibold ${t.text}`}>{maintDetail.description}</p>
                 <p className={`text-xs ${t.muted} mt-0.5`}>{fmtDate(maintDetail.date)}{maintDetail.shop ? " · " + maintDetail.shop : ""}</p>
               </div>
-              <button onClick={() => setMaintDetail(null)} className={`${t.muted} text-xl ml-3`}>×</button>
+              <button onClick={() => setMaintDetail(null)} className={`${t.muted} text-xl ml-3 w-10 h-10 flex items-center justify-center rounded-lg`}>×</button>
             </div>
             <div className={`border-t ${t.border} pt-4 mb-4`}>
               <div className="flex justify-between mb-3"><span className={`text-sm ${t.muted}`}>Cost</span><span className={`text-sm font-semibold ${t.text}`}>{fmt(maintDetail.cost)}</span></div>
@@ -693,8 +693,8 @@ export default function App() {
 
       {/* Driven today modal */}
       {showDrivenModal && car && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 px-4 pb-4">
+          <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl`}>
             <h3 className={`text-base font-semibold mb-1 ${t.text}`}>Driven today</h3>
             <p className={`text-sm ${t.muted} mb-4`}>{car.year} {car.make} {car.model}</p>
             <div>
@@ -712,8 +712,8 @@ export default function App() {
 
       {/* Oil modal */}
       {showOilModal && car && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 px-4 pb-4">
+          <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl`}>
             <h3 className={`text-base font-semibold mb-1 ${t.text}`}>Log Oil Change</h3>
             <p className={`text-sm ${t.muted} mb-4`}>{car.year} {car.make} {car.model}</p>
             <div className="flex flex-col gap-3">
@@ -732,8 +732,8 @@ export default function App() {
 
       {/* Oil settings modal */}
       {showOilSettings && car && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 px-4 pb-4">
+          <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl`}>
             <h3 className={`text-base font-semibold mb-4 ${t.text}`}>Oil Change Intervals</h3>
             <div className="flex flex-col gap-3">
               <div><label className={`block text-xs ${t.muted} mb-1`}>Miles between changes</label><input type="number" value={oilSettingsForm.interval_miles} onChange={e => setOilSettingsForm(s => ({ ...s, interval_miles: e.target.value }))} className={inputCls} /></div>
@@ -749,8 +749,8 @@ export default function App() {
 
       {/* Share modal */}
       {showShare && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className={`border ${t.card} rounded-xl p-6 w-full max-w-sm shadow-2xl`}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 px-4 pb-4">
+          <div className={`border ${t.card} rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl`}>
             <h3 className={`text-base font-semibold mb-2 ${t.text}`}>Share your garage</h3>
             <p className={`text-sm ${t.muted} mb-4`}>Send this code to anyone you want to invite.</p>
             <div className={`border ${t.border} rounded-lg p-3 mb-4 font-mono text-sm break-all ${t.text} ${dark ? "bg-stone-800" : "bg-stone-100"}`}>{garage.id}</div>
@@ -766,7 +766,7 @@ export default function App() {
       )}
 
       {/* Top bar */}
-      <div className={`sticky top-0 z-40 border-b ${t.border} ${dark ? "bg-stone-950/90" : "bg-stone-50/90"} backdrop-blur-sm px-4 py-3 flex justify-between items-center`}>
+      <div className={`sticky top-0 z-40 border-b ${t.border} ${dark ? "bg-stone-950/90" : "bg-stone-50/90"} backdrop-blur-sm px-4 py-3 flex justify-between items-center`} style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
         <span className="text-sm font-semibold tracking-tight">{garage?.name || "The Collection"}</span>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowShare(true)} className={`text-xs px-2.5 py-1.5 rounded-md border ${t.border} ${t.muted}`}>Share 🔗</button>
@@ -776,7 +776,7 @@ export default function App() {
 
       {/* ── DASHBOARD ── */}
       {view === "dashboard" && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <h1 className="text-2xl font-semibold tracking-tight mb-6">Dashboard</h1>
 
           <div className={`border-t-2 border-t-amber-600 border ${t.card} rounded-xl p-5 mb-5`}>
@@ -849,7 +849,7 @@ export default function App() {
 
       {/* ── LIST ── */}
       {view === "list" && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold tracking-tight">My Garage</h1>
             <button onClick={openAdd} className="bg-amber-600 hover:bg-amber-500 text-stone-950 font-semibold text-sm px-4 py-2 rounded-md">+ Add</button>
@@ -922,7 +922,7 @@ export default function App() {
 
       {/* ── DETAIL ── */}
       {view === "detail" && car && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <div className="flex justify-between items-center mb-6">
             <button onClick={() => setView("list")} className={`text-sm ${t.muted}`}>← Back</button>
             <div className="flex gap-2">
@@ -964,14 +964,18 @@ export default function App() {
             </div>
           </div>
 
-          <style>{`.tsc::-webkit-scrollbar{display:none}`}</style>
-          <div className={`tsc flex border-b ${t.border} mb-5 overflow-x-auto`} style={{ scrollbarWidth: "none" }}>
-            {["details", "photos", "financials", "insurance", "maintenance", "oil"].map(tb => (
-              <button key={tb} onClick={() => setTab(tb)}
-                className={`px-4 py-2 text-xs font-medium uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap ${tab === tb ? "border-amber-600 text-amber-600" : `border-transparent ${t.muted}`}`}>
-                {tb === "oil" ? "🛢 Oil" : tb}
-                {tb === "photos" && car.photos?.length > 0 ? ` (${car.photos.length})` : ""}
-                {tb === "maintenance" && car.maintenance_log?.length > 0 ? ` (${car.maintenance_log.length})` : ""}
+          <div className={`grid grid-cols-3 gap-2 mb-5`}>
+            {[
+              { id: "details", label: "Details" },
+              { id: "photos", label: car.photos?.length > 0 ? `Photos (${car.photos.length})` : "Photos" },
+              { id: "financials", label: "Financials" },
+              { id: "insurance", label: "Insurance" },
+              { id: "maintenance", label: car.maintenance_log?.length > 0 ? `Service (${car.maintenance_log.length})` : "Service" },
+              { id: "oil", label: "🛢 Oil" },
+            ].map(tb => (
+              <button key={tb.id} onClick={() => setTab(tb.id)}
+                className={`py-2 px-2 rounded-lg text-xs font-semibold text-center transition-colors ${tab === tb.id ? "bg-amber-600 text-stone-950" : `${dark ? "bg-stone-800 text-stone-400" : "bg-stone-100 text-stone-500"}`}`}>
+                {tb.label}
               </button>
             ))}
           </div>
@@ -1227,7 +1231,7 @@ export default function App() {
                       <p className={`text-xs ${t.muted}`}>{fmtDate(e.date)}{e.mileage ? ` · ${parseInt(e.mileage).toLocaleString()} mi` : ""}</p>
                       {e.notes && <p className={`text-xs ${t.subtle} mt-0.5`}>{e.notes}</p>}
                     </div>
-                    <button onClick={() => deleteOilLog(e.id)} className={`${t.muted} hover:text-red-400 text-xl ml-3`}>×</button>
+                    <button onClick={() => deleteOilLog(e.id)} className={`${t.muted} hover:text-red-400 text-xl ml-3 w-10 h-10 flex items-center justify-center rounded-lg`}>×</button>
                   </div>
                 ))
               }
@@ -1238,69 +1242,79 @@ export default function App() {
 
       {/* ── FORM ── */}
       {view === "form" && form && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <button onClick={() => setView(isEditing ? "detail" : "list")} className={`text-sm ${t.muted} mb-6 block`}>← Back</button>
           <h2 className="text-xl font-semibold tracking-tight mb-6">{isEditing ? "Edit vehicle" : "Add vehicle"}</h2>
 
           <FormSection title="Vehicle Identity" t={t}>
-            <div className="grid grid-cols-2 gap-3 mb-3 sm:grid-cols-3">
-              <Field label="Year *" t={t}><input type="number" value={form.year} onChange={e => setF("year", e.target.value)} placeholder="1967" className={inputCls} /></Field>
+            <div className="flex flex-col gap-3 mb-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Year *" t={t}><input type="number" value={form.year} onChange={e => setF("year", e.target.value)} placeholder="1967" className={inputCls} /></Field>
+                <Field label="Condition" t={t}><select value={form.condition} onChange={e => setF("condition", e.target.value)} className={inputCls}>{CONDITIONS.map(c => <option key={c}>{c}</option>)}</select></Field>
+              </div>
               <Field label="Make *" t={t}><input value={form.make} onChange={e => setF("make", e.target.value)} placeholder="Ferrari" className={inputCls} /></Field>
               <Field label="Model *" t={t}><input value={form.model} onChange={e => setF("model", e.target.value)} className={inputCls} /></Field>
-              <Field label="Color" t={t}><input value={form.color} onChange={e => setF("color", e.target.value)} className={inputCls} /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Color" t={t}><input value={form.color} onChange={e => setF("color", e.target.value)} className={inputCls} /></Field>
+                <Field label="Mileage" t={t}><input type="number" value={form.mileage} onChange={e => setF("mileage", e.target.value)} className={inputCls} /></Field>
+              </div>
               <Field label="VIN / Serial" t={t}><input value={form.vin} onChange={e => setF("vin", e.target.value)} className={inputCls} /></Field>
-              <Field label="Mileage" t={t}><input type="number" value={form.mileage} onChange={e => setF("mileage", e.target.value)} className={inputCls} /></Field>
-              <Field label="Condition" t={t}><select value={form.condition} onChange={e => setF("condition", e.target.value)} className={inputCls}>{CONDITIONS.map(c => <option key={c}>{c}</option>)}</select></Field>
-              <Field label="Storage Location" t={t} span={2}><input value={form.location} onChange={e => setF("location", e.target.value)} className={inputCls} /></Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+              <Field label="Storage Location" t={t}><input value={form.location} onChange={e => setF("location", e.target.value)} className={inputCls} /></Field>
               <Field label="Last Driven / Started" t={t}>
                 <div className="flex gap-2">
                   <input type="date" value={form.last_driven} onChange={e => setF("last_driven", e.target.value)} className={inputCls} />
-                  <button type="button" onClick={() => setF("last_driven", todayStr())} className={`shrink-0 ${dark ? "bg-stone-700 hover:bg-stone-600 text-stone-200" : "bg-stone-200 hover:bg-stone-300 text-stone-700"} text-xs font-medium px-3 rounded-md whitespace-nowrap`}>Today</button>
+                  <button type="button" onClick={() => setF("last_driven", todayStr())} className={`shrink-0 ${dark ? "bg-stone-700 hover:bg-stone-600 text-stone-200" : "bg-stone-200 hover:bg-stone-300 text-stone-700"} text-sm font-medium px-3 rounded-md whitespace-nowrap`}>Today</button>
                 </div>
               </Field>
               <Field label="Next Service Due" t={t}><input type="date" value={form.next_service_date} onChange={e => setF("next_service_date", e.target.value)} className={inputCls} /></Field>
+              <Field label="Notes" t={t}><textarea value={form.notes} onChange={e => setF("notes", e.target.value)} placeholder="Provenance, history, notable details…" className={`${inputCls} min-h-20 resize-y`} /></Field>
             </div>
-            <Field label="Notes" t={t}><textarea value={form.notes} onChange={e => setF("notes", e.target.value)} placeholder="Provenance, history, notable details…" className={`${inputCls} min-h-20 resize-y`} /></Field>
           </FormSection>
 
           <FormSection title="Financials" t={t}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Field label="Purchase Price ($)" t={t}><input type="number" value={form.purchase_price} onChange={e => setF("purchase_price", e.target.value)} className={inputCls} /></Field>
-              <Field label="Current Value ($)" t={t}><input type="number" value={form.current_value} onChange={e => setF("current_value", e.target.value)} className={inputCls} /></Field>
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Purchase Price ($)" t={t}><input type="number" value={form.purchase_price} onChange={e => setF("purchase_price", e.target.value)} className={inputCls} /></Field>
+                <Field label="Current Value ($)" t={t}><input type="number" value={form.current_value} onChange={e => setF("current_value", e.target.value)} className={inputCls} /></Field>
+              </div>
               <Field label="Purchase Date" t={t}><input type="date" value={form.purchase_date} onChange={e => setF("purchase_date", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
           <FormSection title="Insurance & Registration" t={t}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Field label="Provider" t={t}><input value={form.insurance} onChange={e => setF("insurance", e.target.value)} className={inputCls} /></Field>
-              <Field label="Policy Number" t={t}><input value={form.policy_number} onChange={e => setF("policy_number", e.target.value)} className={inputCls} /></Field>
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Provider" t={t}><input value={form.insurance} onChange={e => setF("insurance", e.target.value)} className={inputCls} /></Field>
+                <Field label="Policy Number" t={t}><input value={form.policy_number} onChange={e => setF("policy_number", e.target.value)} className={inputCls} /></Field>
+              </div>
               <Field label="Registration Expiry" t={t}><input type="date" value={form.registration_expiry} onChange={e => setF("registration_expiry", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
           <FormSection title="Oil Change" t={t}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Field label="Last Change Date" t={t}><input type="date" value={form.last_oil_change_date} onChange={e => setF("last_oil_change_date", e.target.value)} className={inputCls} /></Field>
-              <Field label="Mileage at Change" t={t}><input type="number" value={form.last_oil_change_mileage} onChange={e => setF("last_oil_change_mileage", e.target.value)} className={inputCls} /></Field>
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Last Change Date" t={t}><input type="date" value={form.last_oil_change_date} onChange={e => setF("last_oil_change_date", e.target.value)} className={inputCls} /></Field>
+                <Field label="Mileage at Change" t={t}><input type="number" value={form.last_oil_change_mileage} onChange={e => setF("last_oil_change_mileage", e.target.value)} className={inputCls} /></Field>
+              </div>
               <Field label="Oil Type" t={t}><select value={form.oil_type} onChange={e => setF("oil_type", e.target.value)} className={inputCls}>{OIL_TYPES.map(o => <option key={o}>{o}</option>)}</select></Field>
-              <Field label="Interval (miles)" t={t}><input type="number" value={form.oil_interval_miles} onChange={e => setF("oil_interval_miles", e.target.value)} className={inputCls} /></Field>
-              <Field label="Interval (months)" t={t}><input type="number" value={form.oil_interval_months} onChange={e => setF("oil_interval_months", e.target.value)} className={inputCls} /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Interval (miles)" t={t}><input type="number" value={form.oil_interval_miles} onChange={e => setF("oil_interval_miles", e.target.value)} className={inputCls} /></Field>
+                <Field label="Interval (months)" t={t}><input type="number" value={form.oil_interval_months} onChange={e => setF("oil_interval_months", e.target.value)} className={inputCls} /></Field>
+              </div>
             </div>
           </FormSection>
 
           <div className="flex gap-3">
-            <button onClick={saveCar} disabled={saving} className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-stone-950 font-semibold text-sm px-5 py-2 rounded-md">{saving ? "Saving…" : "Save Vehicle"}</button>
-            <button onClick={() => setView(isEditing ? "detail" : "list")} className={`border ${t.border} ${t.muted} text-sm px-4 py-2 rounded-md`}>Cancel</button>
+            <button onClick={saveCar} disabled={saving} className="flex-1 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-stone-950 font-semibold text-sm px-5 py-3 rounded-xl">{saving ? "Saving…" : "Save Vehicle"}</button>
+            <button onClick={() => setView(isEditing ? "detail" : "list")} className={`border ${t.border} ${t.muted} text-sm px-5 py-3 rounded-xl`}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* ── SETTINGS ── */}
       {view === "settings" && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <h1 className="text-2xl font-semibold tracking-tight mb-6">Settings</h1>
 
           <FormSection title="Garage" t={t}>
@@ -1385,7 +1399,7 @@ export default function App() {
       )}
 
       {/* ── BOTTOM NAV ── */}
-      <div className={`fixed bottom-0 left-0 right-0 border-t ${t.border} ${dark ? "bg-stone-950/95" : "bg-stone-50/95"} backdrop-blur-sm flex`}>
+      <div className={`fixed bottom-0 left-0 right-0 border-t ${t.border} ${dark ? "bg-stone-950/95" : "bg-stone-50/95"} backdrop-blur-sm flex`} style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {[
           { label: "Dashboard", icon: "◉", v: "dashboard" },
           { label: "Garage", icon: "🚗", v: "list" },
@@ -1393,7 +1407,7 @@ export default function App() {
           { label: "Settings", icon: "⚙️", v: "settings" },
         ].map(item => (
           <button key={item.label} onClick={() => item.v === "add" ? openAdd() : setView(item.v)}
-            className={`flex-1 flex flex-col items-center py-3 gap-0.5 transition-colors ${(view === item.v || (item.v === "add" && view === "form" && !isEditing)) ? "text-amber-500" : t.muted}`}>
+            className={`flex-1 flex flex-col items-center py-3 gap-0.5 transition-colors min-h-[56px] ${(view === item.v || (item.v === "add" && view === "form" && !isEditing)) ? "text-amber-500" : t.muted}`}>
             <span className="text-lg leading-none">{item.icon}</span>
             <span className="text-xs">{item.label}</span>
           </button>
