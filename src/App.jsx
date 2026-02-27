@@ -194,6 +194,8 @@ export default function App() {
   // Log state
   const [newLogEntry, setNewLogEntry] = useState("");
   const [savingLog, setSavingLog] = useState(false);
+  const [editingLogId, setEditingLogId] = useState(null);
+  const [editingLogText, setEditingLogText] = useState("");
 
   // Driven today state
   const [showDrivenModal, setShowDrivenModal] = useState(false);
@@ -517,8 +519,19 @@ export default function App() {
     setSavingLog(false);
   }
 
+  async function saveEditLogEntry() {
+    if (!editingLogText.trim()) return;
+    const updated = (car.vehicle_log || []).map(e =>
+      e.id === editingLogId ? { ...e, text: editingLogText.trim(), edited: new Date().toISOString() } : e
+    );
+    await updateCar(selectedId, { vehicle_log: updated });
+    setEditingLogId(null);
+    setEditingLogText("");
+  }
+
   async function deleteLogEntry(id) {
     await updateCar(selectedId, { vehicle_log: (car.vehicle_log || []).filter(e => e.id !== id) });
+    setConfirmModal(null);
   }
 
   // ── MILEAGE PREDICTION ──
@@ -1296,12 +1309,37 @@ export default function App() {
               {(car.vehicle_log || []).length === 0
                 ? <p className={`text-sm text-center py-8 ${t.muted}`}>No log entries yet.</p>
                 : (car.vehicle_log || []).map(e => (
-                  <div key={e.id} className={`py-4 border-b ${t.divider} flex justify-between items-start gap-3`}>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs ${t.muted} mb-1`}>{new Date(e.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {new Date(e.ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</p>
-                      <p className={`text-sm ${t.text} leading-relaxed`}>{e.text}</p>
-                    </div>
-                    <button onClick={() => askConfirm("Delete this log entry?", () => deleteLogEntry(e.id))} className={`${t.muted} hover:text-red-400 text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0`}>×</button>
+                  <div key={e.id} className={`py-4 border-b ${t.divider}`}>
+                    {editingLogId === e.id ? (
+                      <div>
+                        <textarea
+                          value={editingLogText}
+                          onChange={ev => setEditingLogText(ev.target.value)}
+                          rows={3}
+                          autoFocus
+                          className={`w-full border rounded-xl px-3 py-3 text-base focus:outline-none font-sans resize-none ${t.input} mb-2`}
+                          style={{ boxSizing: "border-box" }}
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={saveEditLogEntry} className="flex-1 bg-amber-600 text-stone-950 font-semibold text-sm py-2 rounded-lg">Save</button>
+                          <button onClick={() => { setEditingLogId(null); setEditingLogText(""); }} className={`border ${t.border} ${t.muted} text-sm px-4 py-2 rounded-lg`}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs ${t.muted} mb-1`}>
+                            {new Date(e.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {new Date(e.ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                            {e.edited && <span className={`ml-1 ${t.muted} opacity-60`}>(edited)</span>}
+                          </p>
+                          <p className={`text-sm ${t.text} leading-relaxed`}>{e.text}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => { setEditingLogId(e.id); setEditingLogText(e.text); }} className={`${t.muted} hover:text-amber-500 w-9 h-9 flex items-center justify-center rounded-lg text-sm`}>✎</button>
+                          <button onClick={() => askConfirm("Delete this log entry?", () => deleteLogEntry(e.id))} className={`${t.muted} hover:text-red-400 w-9 h-9 flex items-center justify-center rounded-lg text-xl`}>×</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               }
@@ -1318,16 +1356,12 @@ export default function App() {
 
           <FormSection title="Vehicle Identity" t={t}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Year *" t={t}><input type="number" value={form.year} onChange={e => setF("year", e.target.value)} placeholder="1967" className={inputCls} /></Field>
-                <Field label="Condition" t={t}><select value={form.condition} onChange={e => setF("condition", e.target.value)} className={inputCls}>{CONDITIONS.map(c => <option key={c}>{c}</option>)}</select></Field>
-              </div>
+              <Field label="Year *" t={t}><input type="number" value={form.year} onChange={e => setF("year", e.target.value)} placeholder="1967" className={inputCls} /></Field>
               <Field label="Make *" t={t}><input value={form.make} onChange={e => setF("make", e.target.value)} placeholder="Ferrari" className={inputCls} /></Field>
               <Field label="Model *" t={t}><input value={form.model} onChange={e => setF("model", e.target.value)} className={inputCls} /></Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Color" t={t}><input value={form.color} onChange={e => setF("color", e.target.value)} className={inputCls} /></Field>
-                <Field label="Mileage" t={t}><input type="number" value={form.mileage} onChange={e => setF("mileage", e.target.value)} className={inputCls} /></Field>
-              </div>
+              <Field label="Color" t={t}><input value={form.color} onChange={e => setF("color", e.target.value)} className={inputCls} /></Field>
+              <Field label="Mileage" t={t}><input type="number" value={form.mileage} onChange={e => setF("mileage", e.target.value)} className={inputCls} /></Field>
+              <Field label="Condition" t={t}><select value={form.condition} onChange={e => setF("condition", e.target.value)} className={inputCls}>{CONDITIONS.map(c => <option key={c}>{c}</option>)}</select></Field>
               <Field label="VIN / Serial" t={t}><input value={form.vin} onChange={e => setF("vin", e.target.value)} className={inputCls} /></Field>
               <Field label="Storage Location" t={t}><input value={form.location} onChange={e => setF("location", e.target.value)} className={inputCls} /></Field>
               <Field label="Last Driven / Started" t={t}>
@@ -1343,35 +1377,27 @@ export default function App() {
 
           <FormSection title="Financials" t={t}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Purchase Price ($)" t={t}><input type="number" value={form.purchase_price} onChange={e => setF("purchase_price", e.target.value)} className={inputCls} /></Field>
-                <Field label="Current Value ($)" t={t}><input type="number" value={form.current_value} onChange={e => setF("current_value", e.target.value)} className={inputCls} /></Field>
-              </div>
+              <Field label="Purchase Price ($)" t={t}><input type="number" value={form.purchase_price} onChange={e => setF("purchase_price", e.target.value)} className={inputCls} /></Field>
+              <Field label="Current Value ($)" t={t}><input type="number" value={form.current_value} onChange={e => setF("current_value", e.target.value)} className={inputCls} /></Field>
               <Field label="Purchase Date" t={t}><input type="date" value={form.purchase_date} onChange={e => setF("purchase_date", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
           <FormSection title="Insurance & Registration" t={t}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Provider" t={t}><input value={form.insurance} onChange={e => setF("insurance", e.target.value)} className={inputCls} /></Field>
-                <Field label="Policy Number" t={t}><input value={form.policy_number} onChange={e => setF("policy_number", e.target.value)} className={inputCls} /></Field>
-              </div>
+              <Field label="Provider" t={t}><input value={form.insurance} onChange={e => setF("insurance", e.target.value)} className={inputCls} /></Field>
+              <Field label="Policy Number" t={t}><input value={form.policy_number} onChange={e => setF("policy_number", e.target.value)} className={inputCls} /></Field>
               <Field label="Registration Expiry (MM/YYYY)" t={t}><input type="text" placeholder="e.g. 03/2026" maxLength={7} value={form.registration_expiry} onChange={e => setF("registration_expiry", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
           <FormSection title="Oil Change" t={t}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Last Change Date" t={t}><input type="date" value={form.last_oil_change_date} onChange={e => setF("last_oil_change_date", e.target.value)} className={inputCls} /></Field>
-                <Field label="Mileage at Change" t={t}><input type="number" value={form.last_oil_change_mileage} onChange={e => setF("last_oil_change_mileage", e.target.value)} className={inputCls} /></Field>
-              </div>
+              <Field label="Last Change Date" t={t}><input type="date" value={form.last_oil_change_date} onChange={e => setF("last_oil_change_date", e.target.value)} className={inputCls} /></Field>
+              <Field label="Mileage at Change" t={t}><input type="number" value={form.last_oil_change_mileage} onChange={e => setF("last_oil_change_mileage", e.target.value)} className={inputCls} /></Field>
               <Field label="Oil Type" t={t}><select value={form.oil_type} onChange={e => setF("oil_type", e.target.value)} className={inputCls}>{OIL_TYPES.map(o => <option key={o}>{o}</option>)}</select></Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Interval (miles)" t={t}><input type="number" value={form.oil_interval_miles} onChange={e => setF("oil_interval_miles", e.target.value)} className={inputCls} /></Field>
-                <Field label="Interval (months)" t={t}><input type="number" value={form.oil_interval_months} onChange={e => setF("oil_interval_months", e.target.value)} className={inputCls} /></Field>
-              </div>
+              <Field label="Interval (miles)" t={t}><input type="number" value={form.oil_interval_miles} onChange={e => setF("oil_interval_miles", e.target.value)} className={inputCls} /></Field>
+              <Field label="Interval (months)" t={t}><input type="number" value={form.oil_interval_months} onChange={e => setF("oil_interval_months", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
