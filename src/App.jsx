@@ -22,7 +22,7 @@ const emptyForm = () => ({
   last_driven: "", notes: "", photos: [], maintenance_log: [],
   last_oil_change_date: "", last_oil_change_mileage: "", oil_type: "Full Synthetic",
   oil_interval_miles: "3000", oil_interval_months: "6", oil_change_log: [],
-  insurance_photo: null, mileage_log: [],
+  insurance_photo: null, mileage_log: [], vehicle_log: [],
 });
 
 function daysUntil(dateStr) {
@@ -190,6 +190,10 @@ export default function App() {
   const [showOilSettings, setShowOilSettings] = useState(false);
   const [oilDoneForm, setOilDoneForm] = useState({ date: todayStr(), mileage: "", oil_type: "Full Synthetic", notes: "" });
   const [oilSettingsForm, setOilSettingsForm] = useState({ interval_miles: "3000", interval_months: "6" });
+
+  // Log state
+  const [newLogEntry, setNewLogEntry] = useState("");
+  const [savingLog, setSavingLog] = useState(false);
 
   // Driven today state
   const [showDrivenModal, setShowDrivenModal] = useState(false);
@@ -501,6 +505,20 @@ export default function App() {
     setJustLoggedDriven(true);
     setTimeout(() => setJustLoggedDriven(false), 3000);
     showToast("Logged ✓");
+  }
+
+  // ── VEHICLE LOG ──
+  async function addLogEntry() {
+    if (!newLogEntry.trim()) return;
+    setSavingLog(true);
+    const entry = { id: Date.now().toString(), text: newLogEntry.trim(), ts: new Date().toISOString() };
+    await updateCar(selectedId, { vehicle_log: [entry, ...(car.vehicle_log || [])] });
+    setNewLogEntry("");
+    setSavingLog(false);
+  }
+
+  async function deleteLogEntry(id) {
+    await updateCar(selectedId, { vehicle_log: (car.vehicle_log || []).filter(e => e.id !== id) });
   }
 
   // ── MILEAGE PREDICTION ──
@@ -980,7 +998,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className={`grid grid-cols-3 gap-2 mb-5`}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "20px" }}>
             {[
               { id: "details", label: "Details" },
               { id: "photos", label: car.photos?.length > 0 ? `Photos (${car.photos.length})` : "Photos" },
@@ -988,6 +1006,7 @@ export default function App() {
               { id: "insurance", label: "Insurance" },
               { id: "maintenance", label: car.maintenance_log?.length > 0 ? `Service (${car.maintenance_log.length})` : "Service" },
               { id: "oil", label: "🛢 Oil" },
+              { id: "log", label: car.vehicle_log?.length > 0 ? `Log (${car.vehicle_log.length})` : "Log" },
             ].map(tb => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
                 className={`py-2 px-2 rounded-lg text-xs font-semibold text-center transition-colors ${tab === tb.id ? "bg-amber-600 text-stone-950" : `${dark ? "bg-stone-800 text-stone-400" : "bg-stone-100 text-stone-500"}`}`}>
@@ -1248,6 +1267,41 @@ export default function App() {
                       {e.notes && <p className={`text-xs ${t.subtle} mt-0.5`}>{e.notes}</p>}
                     </div>
                     <button onClick={() => deleteOilLog(e.id)} className={`${t.muted} hover:text-red-400 text-xl ml-3 w-10 h-10 flex items-center justify-center rounded-lg`}>×</button>
+                  </div>
+                ))
+              }
+            </div>
+          )}
+
+          {/* Log tab */}
+          {tab === "log" && (
+            <div>
+              <div className="mb-5">
+                <textarea
+                  value={newLogEntry}
+                  onChange={e => setNewLogEntry(e.target.value)}
+                  placeholder="Add a note — condition update, work done, observation, plan…"
+                  rows={3}
+                  className={`w-full border rounded-xl px-3 py-3 text-base focus:outline-none font-sans resize-none ${t.input}`}
+                  style={{ boxSizing: "border-box" }}
+                />
+                <button
+                  onClick={addLogEntry}
+                  disabled={savingLog || !newLogEntry.trim()}
+                  className="mt-2 w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-stone-950 font-semibold text-sm py-3 rounded-xl">
+                  {savingLog ? "Saving…" : "Add Entry"}
+                </button>
+              </div>
+
+              {(car.vehicle_log || []).length === 0
+                ? <p className={`text-sm text-center py-8 ${t.muted}`}>No log entries yet.</p>
+                : (car.vehicle_log || []).map(e => (
+                  <div key={e.id} className={`py-4 border-b ${t.divider} flex justify-between items-start gap-3`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs ${t.muted} mb-1`}>{new Date(e.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {new Date(e.ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</p>
+                      <p className={`text-sm ${t.text} leading-relaxed`}>{e.text}</p>
+                    </div>
+                    <button onClick={() => askConfirm("Delete this log entry?", () => deleteLogEntry(e.id))} className={`${t.muted} hover:text-red-400 text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0`}>×</button>
                   </div>
                 ))
               }
