@@ -29,6 +29,20 @@ function daysUntil(dateStr) {
   if (!dateStr) return null;
   return Math.ceil((new Date(dateStr + "T12:00:00") - new Date()) / 86400000);
 }
+function daysUntilReg(mmyyyy) {
+  if (!mmyyyy || !mmyyyy.includes("/")) return null;
+  const [mm, yyyy] = mmyyyy.split("/");
+  if (!mm || !yyyy) return null;
+  // last day of the month
+  const expiry = new Date(parseInt(yyyy), parseInt(mm), 0); // day 0 = last day of prev month
+  return Math.ceil((expiry - new Date()) / 86400000);
+}
+function fmtReg(mmyyyy) {
+  if (!mmyyyy || !mmyyyy.includes("/")) return "—";
+  const [mm, yyyy] = mmyyyy.split("/");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[parseInt(mm) - 1]} ${yyyy}`;
+}
 function daysUntilOilByDate(last, months) {
   if (!last || !months) return null;
   const d = new Date(last + "T12:00:00");
@@ -127,9 +141,9 @@ function FormSection({ title, children, t }) {
 
 function Field({ label, children, t, span }) {
   return (
-    <div className={`min-w-0 ${span === 2 ? "col-span-2" : ""}`}>
+    <div style={{ minWidth: 0, ...(span === 2 ? { gridColumn: "span 2" } : {}) }}>
       <label className={`block text-xs ${t.muted} mb-1`}>{label}</label>
-      {children}
+      <div style={{ width: "100%", boxSizing: "border-box" }}>{children}</div>
     </div>
   );
 }
@@ -201,7 +215,8 @@ export default function App() {
     hover: dark ? "hover:bg-stone-800" : "hover:bg-stone-50",
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
-  const inputCls = `w-full min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
+  const inputCls = `min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
+  const inputStyle = { width: "100%", boxSizing: "border-box" };
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
   function askConfirm(msg, fn) { setConfirmModal({ msg, fn }); }
@@ -532,7 +547,7 @@ export default function App() {
     });
 
   const allAlerts = cars.flatMap(c => {
-    const rd = daysUntil(c.registration_expiry), sd = daysUntil(c.next_service_date);
+    const rd = daysUntilReg(c.registration_expiry), sd = daysUntil(c.next_service_date);
     const dL = daysUntilOilByDate(c.last_oil_change_date, c.oil_interval_months);
     const mL = milesUntilOil(c.last_oil_change_mileage, c.mileage, c.oil_interval_miles);
     const n = `${c.year} ${c.make} ${c.model}`;
@@ -888,7 +903,7 @@ export default function App() {
               <div className="flex flex-col gap-3">
                 {filtered.map(c => {
                   const gain = (+c.current_value || 0) - (+c.purchase_price || 0);
-                  const rd = daysUntil(c.registration_expiry), sd = daysUntil(c.next_service_date);
+                  const rd = daysUntilReg(c.registration_expiry), sd = daysUntil(c.next_service_date);
                   return (
                     <button key={c.id} onClick={() => openCar(c.id)}
                       className={`flex justify-between items-center p-4 border ${t.card} rounded-xl ${t.hover} text-left w-full`}>
@@ -949,7 +964,7 @@ export default function App() {
               {car.condition && <span className="text-xs text-amber-600 bg-amber-600/10 border border-amber-600/30 rounded px-2 py-1 font-medium">{car.condition}</span>}
             </div>
             {(() => {
-              const rd = daysUntil(car.registration_expiry), sd = daysUntil(car.next_service_date);
+              const rd = daysUntilReg(car.registration_expiry), sd = daysUntil(car.next_service_date);
               const w = [];
               if (rd !== null && rd <= 30) w.push(<WarningBadge key="r" days={rd} label="Registration" dark={dark} />);
               if (sd !== null && sd <= 30) w.push(<WarningBadge key="s" days={sd} label="Service" dark={dark} />);
@@ -1107,16 +1122,16 @@ export default function App() {
           {tab === "insurance" && (
             <div>
               {(() => {
-                const rd = daysUntil(car.registration_expiry);
+                const rd = daysUntilReg(car.registration_expiry);
                 if (rd === null) return null;
                 if (rd < 0) return <div className={`mb-4 p-4 rounded-xl border ${dark ? "bg-red-900/30 border-red-700/50" : "bg-red-50 border-red-200"}`}><p className={`text-sm font-semibold ${dark ? "text-red-300" : "text-red-700"}`}>⚠ Registration Expired</p><p className={`text-xs mt-0.5 ${dark ? "text-red-400" : "text-red-500"}`}>Expired {Math.abs(rd)} days ago — renewal required.</p></div>;
-                if (rd <= 60) return <div className={`mb-4 p-4 rounded-xl border ${dark ? "bg-amber-900/30 border-amber-700/50" : "bg-amber-50 border-amber-200"}`}><p className={`text-sm font-semibold ${dark ? "text-amber-300" : "text-amber-700"}`}>⚠ Registration Expiring Soon</p><p className={`text-xs mt-0.5 ${dark ? "text-amber-400" : "text-amber-600"}`}>Expires in {rd} days — renew before {fmtDate(car.registration_expiry)}.</p></div>;
+                if (rd <= 60) return <div className={`mb-4 p-4 rounded-xl border ${dark ? "bg-amber-900/30 border-amber-700/50" : "bg-amber-50 border-amber-200"}`}><p className={`text-sm font-semibold ${dark ? "text-amber-300" : "text-amber-700"}`}>⚠ Registration Expiring Soon</p><p className={`text-xs mt-0.5 ${dark ? "text-amber-400" : "text-amber-600"}`}>Expires in {rd} days — renew before {fmtReg(car.registration_expiry)}.</p></div>;
                 return null;
               })()}
               {[
                 { label: "Provider", value: car.insurance },
                 { label: "Policy Number", value: car.policy_number },
-                { label: "Registration Expiry", value: fmtDate(car.registration_expiry) },
+                { label: "Registration Expiry", value: fmtReg(car.registration_expiry) },
               ].map(r => (
                 <div key={r.label} className={`flex justify-between items-start py-3 border-b ${t.divider}`}>
                   <span className={`text-sm ${t.muted}`}>{r.label}</span>
@@ -1242,28 +1257,28 @@ export default function App() {
 
       {/* ── FORM ── */}
       {view === "form" && form && (
-        <div className="px-4 py-6 overflow-hidden">
+        <div style={{ padding: "24px 16px", boxSizing: "border-box", width: "100%", overflowX: "hidden" }}>
           <button onClick={() => setView(isEditing ? "detail" : "list")} className={`text-sm ${t.muted} mb-6 block`}>← Back</button>
           <h2 className="text-xl font-semibold tracking-tight mb-6">{isEditing ? "Edit vehicle" : "Add vehicle"}</h2>
 
           <FormSection title="Vehicle Identity" t={t}>
-            <div className="flex flex-col gap-3 mb-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Year *" t={t}><input type="number" value={form.year} onChange={e => setF("year", e.target.value)} placeholder="1967" className={inputCls} /></Field>
                 <Field label="Condition" t={t}><select value={form.condition} onChange={e => setF("condition", e.target.value)} className={inputCls}>{CONDITIONS.map(c => <option key={c}>{c}</option>)}</select></Field>
               </div>
               <Field label="Make *" t={t}><input value={form.make} onChange={e => setF("make", e.target.value)} placeholder="Ferrari" className={inputCls} /></Field>
               <Field label="Model *" t={t}><input value={form.model} onChange={e => setF("model", e.target.value)} className={inputCls} /></Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Color" t={t}><input value={form.color} onChange={e => setF("color", e.target.value)} className={inputCls} /></Field>
                 <Field label="Mileage" t={t}><input type="number" value={form.mileage} onChange={e => setF("mileage", e.target.value)} className={inputCls} /></Field>
               </div>
               <Field label="VIN / Serial" t={t}><input value={form.vin} onChange={e => setF("vin", e.target.value)} className={inputCls} /></Field>
               <Field label="Storage Location" t={t}><input value={form.location} onChange={e => setF("location", e.target.value)} className={inputCls} /></Field>
               <Field label="Last Driven / Started" t={t}>
-                <div className="flex gap-2">
-                  <input type="date" value={form.last_driven} onChange={e => setF("last_driven", e.target.value)} className={inputCls} />
-                  <button type="button" onClick={() => setF("last_driven", todayStr())} className={`shrink-0 ${dark ? "bg-stone-700 hover:bg-stone-600 text-stone-200" : "bg-stone-200 hover:bg-stone-300 text-stone-700"} text-sm font-medium px-3 rounded-md whitespace-nowrap`}>Today</button>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input type="date" value={form.last_driven} onChange={e => setF("last_driven", e.target.value)} className={inputCls} style={{ flex: 1, minWidth: 0 }} />
+                  <button type="button" onClick={() => setF("last_driven", todayStr())} className={`shrink-0 ${dark ? "bg-stone-700 text-stone-200" : "bg-stone-200 text-stone-700"} text-sm font-medium px-3 rounded-md`}>Today</button>
                 </div>
               </Field>
               <Field label="Next Service Due" t={t}><input type="date" value={form.next_service_date} onChange={e => setF("next_service_date", e.target.value)} className={inputCls} /></Field>
@@ -1272,8 +1287,8 @@ export default function App() {
           </FormSection>
 
           <FormSection title="Financials" t={t}>
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Purchase Price ($)" t={t}><input type="number" value={form.purchase_price} onChange={e => setF("purchase_price", e.target.value)} className={inputCls} /></Field>
                 <Field label="Current Value ($)" t={t}><input type="number" value={form.current_value} onChange={e => setF("current_value", e.target.value)} className={inputCls} /></Field>
               </div>
@@ -1282,23 +1297,23 @@ export default function App() {
           </FormSection>
 
           <FormSection title="Insurance & Registration" t={t}>
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Provider" t={t}><input value={form.insurance} onChange={e => setF("insurance", e.target.value)} className={inputCls} /></Field>
                 <Field label="Policy Number" t={t}><input value={form.policy_number} onChange={e => setF("policy_number", e.target.value)} className={inputCls} /></Field>
               </div>
-              <Field label="Registration Expiry" t={t}><input type="date" value={form.registration_expiry} onChange={e => setF("registration_expiry", e.target.value)} className={inputCls} /></Field>
+              <Field label="Registration Expiry (MM/YYYY)" t={t}><input type="text" placeholder="e.g. 03/2026" maxLength={7} value={form.registration_expiry} onChange={e => setF("registration_expiry", e.target.value)} className={inputCls} /></Field>
             </div>
           </FormSection>
 
           <FormSection title="Oil Change" t={t}>
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Last Change Date" t={t}><input type="date" value={form.last_oil_change_date} onChange={e => setF("last_oil_change_date", e.target.value)} className={inputCls} /></Field>
                 <Field label="Mileage at Change" t={t}><input type="number" value={form.last_oil_change_mileage} onChange={e => setF("last_oil_change_mileage", e.target.value)} className={inputCls} /></Field>
               </div>
               <Field label="Oil Type" t={t}><select value={form.oil_type} onChange={e => setF("oil_type", e.target.value)} className={inputCls}>{OIL_TYPES.map(o => <option key={o}>{o}</option>)}</select></Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Interval (miles)" t={t}><input type="number" value={form.oil_interval_miles} onChange={e => setF("oil_interval_miles", e.target.value)} className={inputCls} /></Field>
                 <Field label="Interval (months)" t={t}><input type="number" value={form.oil_interval_months} onChange={e => setF("oil_interval_months", e.target.value)} className={inputCls} /></Field>
               </div>
