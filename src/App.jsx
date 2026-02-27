@@ -127,7 +127,7 @@ function FormSection({ title, children, t }) {
 
 function Field({ label, children, t, span }) {
   return (
-    <div className={span === 2 ? "col-span-2" : ""}>
+    <div className={`min-w-0 ${span === 2 ? "col-span-2" : ""}`}>
       <label className={`block text-xs ${t.muted} mb-1`}>{label}</label>
       {children}
     </div>
@@ -201,7 +201,7 @@ export default function App() {
     hover: dark ? "hover:bg-stone-800" : "hover:bg-stone-50",
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
-  const inputCls = `w-full border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
+  const inputCls = `w-full min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
   function askConfirm(msg, fn) { setConfirmModal({ msg, fn }); }
@@ -1242,7 +1242,7 @@ export default function App() {
 
       {/* ── FORM ── */}
       {view === "form" && form && (
-        <div className="px-4 py-6">
+        <div className="px-4 py-6 overflow-hidden">
           <button onClick={() => setView(isEditing ? "detail" : "list")} className={`text-sm ${t.muted} mb-6 block`}>← Back</button>
           <h2 className="text-xl font-semibold tracking-tight mb-6">{isEditing ? "Edit vehicle" : "Add vehicle"}</h2>
 
