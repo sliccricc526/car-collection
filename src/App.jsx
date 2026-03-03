@@ -150,6 +150,7 @@ function Field({ label, children, t, span }) {
 
 export default function App() {
   const [dark, setDark] = useState(true);
+  const [hideValues, setHideValues] = useState(false);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authView, setAuthView] = useState("login");
@@ -221,7 +222,7 @@ export default function App() {
     hover: dark ? "hover:bg-stone-800" : "hover:bg-stone-50",
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
-  const inputCls = `w-full min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
+  const fmtV = (n) => hideValues ? "••••••" : fmt(n);
   const inputStyle = { boxSizing: "border-box" };
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
@@ -717,7 +718,7 @@ export default function App() {
               <button onClick={() => setMaintDetail(null)} className={`${t.muted} text-xl ml-3 w-10 h-10 flex items-center justify-center rounded-lg`}>×</button>
             </div>
             <div className={`border-t ${t.border} pt-4 mb-4`}>
-              <div className="flex justify-between mb-3"><span className={`text-sm ${t.muted}`}>Cost</span><span className={`text-sm font-semibold ${t.text}`}>{fmt(maintDetail.cost)}</span></div>
+              <div className="flex justify-between mb-3"><span className={`text-sm ${t.muted}`}>Cost</span><span className={`text-sm font-semibold ${t.text}`}>{fmtV(maintDetail.cost)}</span></div>
               {maintDetail.notes ? <div className={`p-3 rounded-lg ${dark ? "bg-stone-800" : "bg-stone-100"}`}><p className={`text-xs tracking-widest uppercase ${t.muted} mb-1`}>Notes</p><p className={`text-sm ${t.subtle} leading-relaxed`}>{maintDetail.notes}</p></div> : <p className={`text-sm ${t.muted} italic`}>No notes.</p>}
             </div>
             <div className={`border-t ${t.border} pt-4 mb-5`}>
@@ -817,6 +818,7 @@ export default function App() {
         <span className="text-sm font-semibold tracking-tight">{garage?.name || "The Collection"}</span>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowShare(true)} className={`text-xs px-2.5 py-1.5 rounded-md border ${t.border} ${t.muted}`}>Share 🔗</button>
+          <button onClick={() => setHideValues(v => !v)} className={`text-xs px-2.5 py-1.5 rounded-md border ${hideValues ? "border-amber-600 text-amber-600" : `${t.border} ${t.muted}`}`}>{hideValues ? "👁" : "💰"}</button>
           <button onClick={() => setDark(d => !d)} className={`text-xs px-2.5 py-1.5 rounded-md border ${t.border} ${t.muted}`}>{dark ? "☀️" : "🌙"}</button>
         </div>
       </div>
@@ -830,9 +832,9 @@ export default function App() {
             <p className={`text-xs tracking-widest uppercase ${t.muted} mb-4`}>Portfolio</p>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { l: "Total Value", v: fmt(totalValue) },
-                { l: "Invested", v: fmt(totalPaid) },
-                { l: "Gain / Loss", v: fmt(totalValue - totalPaid), c: (totalValue - totalPaid) >= 0 ? "text-green-500" : "text-red-400" },
+                { l: "Total Value", v: fmtV(totalValue) },
+                { l: "Invested", v: fmtV(totalPaid) },
+                { l: "Gain / Loss", v: fmtV(totalValue - totalPaid), c: (totalValue - totalPaid) >= 0 ? "text-green-500" : "text-red-400" },
                 { l: "Vehicles", v: String(cars.length) },
               ].map(s => (
                 <div key={s.l}><p className={`text-xs ${t.muted} mb-0.5`}>{s.l}</p><p className={`text-xl font-semibold ${s.c || t.text}`}>{s.v}</p></div>
@@ -882,8 +884,8 @@ export default function App() {
                         <p className={`text-xs ${t.muted}`}>{c.condition} · {fmtMiles(c.mileage)}</p>
                       </div>
                       <div className="text-right ml-3 shrink-0">
-                        <p className={`text-sm font-semibold ${t.text}`}>{fmt(c.current_value)}</p>
-                        <p className={`text-xs ${gain >= 0 ? "text-green-500" : "text-red-400"}`}>{gain >= 0 ? "+" : ""}{fmt(gain)}</p>
+                        <p className={`text-sm font-semibold ${t.text}`}>{fmtV(c.current_value)}</p>
+                        <p className={`text-xs ${gain >= 0 ? "text-green-500" : "text-red-400"}`}>{gain >= 0 ? "+" : ""}{fmtV(gain)}</p>
                       </div>
                     </button>
                   );
@@ -905,9 +907,9 @@ export default function App() {
             <div className={`grid grid-cols-2 ${t.strip} border ${t.border} rounded-xl mb-5 overflow-hidden`}>
               {[
                 { label: "Vehicles", value: String(cars.length) },
-                { label: "Total Value", value: fmt(totalValue) },
-                { label: "Invested", value: fmt(totalPaid) },
-                { label: "Gain / Loss", value: fmt(totalValue - totalPaid), color: (totalValue - totalPaid) >= 0 ? "text-green-500" : "text-red-400" },
+                { label: "Total Value", value: fmtV(totalValue) },
+                { label: "Invested", value: fmtV(totalPaid) },
+                { label: "Gain / Loss", value: fmtV(totalValue - totalPaid), color: (totalValue - totalPaid) >= 0 ? "text-green-500" : "text-red-400" },
               ].map((st, i) => (
                 <div key={st.label} className={`p-4 ${i < 2 ? `border-b ${t.border}` : ""} ${i % 2 === 0 ? `border-r ${t.border}` : ""}`}>
                   <p className={`text-xs tracking-widest uppercase ${t.muted} mb-1`}>{st.label}</p>
@@ -953,8 +955,8 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-3 ml-3 shrink-0">
                         <div className="text-right">
-                          <p className="text-sm font-semibold">{fmt(c.current_value)}</p>
-                          <p className={`text-xs ${gain >= 0 ? "text-green-500" : "text-red-400"}`}>{gain >= 0 ? "+" : ""}{fmt(gain)}</p>
+                          <p className="text-sm font-semibold">{fmtV(c.current_value)}</p>
+                          <p className={`text-xs ${gain >= 0 ? "text-green-500" : "text-red-400"}`}>{gain >= 0 ? "+" : ""}{fmtV(gain)}</p>
                         </div>
                         <span className={`${t.muted} text-lg`}>›</span>
                       </div>
@@ -1132,9 +1134,9 @@ export default function App() {
             <div>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {[
-                  { label: "Purchase Price", value: fmt(car.purchase_price) },
-                  { label: "Current Value", value: fmt(car.current_value) },
-                  { label: "Unrealized Gain", value: fmt((+car.current_value || 0) - (+car.purchase_price || 0)), color: (+car.current_value - +car.purchase_price) >= 0 ? "text-green-500" : "text-red-400" },
+                  { label: "Purchase Price", value: fmtV(car.purchase_price) },
+                  { label: "Current Value", value: fmtV(car.current_value) },
+                  { label: "Unrealized Gain", value: fmtV((+car.current_value || 0) - (+car.purchase_price || 0)), color: (+car.current_value - +car.purchase_price) >= 0 ? "text-green-500" : "text-red-400" },
                 ].map(fc => (
                   <div key={fc.label} className={`border ${t.card} rounded-xl p-4`}>
                     <p className={`text-xs tracking-widest uppercase ${t.muted} mb-2`}>{fc.label}</p>
@@ -1142,7 +1144,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <p className={`text-sm ${t.muted} mb-4`}>Total maintenance spend: <span className={`font-medium ${t.text}`}>{fmt((car.maintenance_log || []).reduce((s, m) => s + (m.cost || 0), 0))}</span></p>
+              <p className={`text-sm ${t.muted} mb-4`}>Total maintenance spend: <span className={`font-medium ${t.text}`}>{fmtV((car.maintenance_log || []).reduce((s, m) => s + (m.cost || 0), 0))}</span></p>
               <div className="flex gap-2 mb-6 flex-wrap">
                 <a href={haggertyUrl(car)} target="_blank" rel="noopener noreferrer" className="text-sm border border-amber-600/40 text-amber-600 hover:bg-amber-600/10 px-4 py-2 rounded-md">🔗 Hagerty</a>
                 <a href={classicUrl(car)} target="_blank" rel="noopener noreferrer" className="text-sm border border-amber-600/40 text-amber-600 hover:bg-amber-600/10 px-4 py-2 rounded-md">🔗 Classic.com</a>
@@ -1223,7 +1225,7 @@ export default function App() {
                         <p className={`text-xs ${t.muted}`}>{fmtDate(m.date)}{m.shop ? " · " + m.shop : ""}{m.receipt ? " 📎" : ""}</p>
                       </div>
                       <div className="flex items-center gap-3 ml-3">
-                        <span className={`text-sm font-semibold ${t.subtle}`}>{fmt(m.cost)}</span>
+                        <span className={`text-sm font-semibold ${t.subtle}`}>{fmtV(m.cost)}</span>
                         <span className={t.muted}>›</span>
                       </div>
                     </div>
