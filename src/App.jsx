@@ -223,6 +223,7 @@ export default function App() {
     strip: dark ? "bg-stone-900" : "bg-stone-100",
   };
   const fmtV = (n) => hideValues ? "••••••" : fmt(n);
+  const inputCls = `w-full min-w-0 border rounded-md px-3 py-2.5 text-base focus:outline-none font-sans ${t.input}`;
   const inputStyle = { boxSizing: "border-box" };
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
